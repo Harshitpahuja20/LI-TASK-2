@@ -20,8 +20,10 @@ export default function Login() {
       const res = await post("/auth/login", form);
       localStorage.setItem("token", res.data.token);
       toast.success("Login successful!");
-
-      router.push("/dashboard");
+      const role = res?.data?.role;
+      if (role === "admin") router.replace("/admin/user");
+      else if (role === "editor") router.replace("/editor/posts");
+      else if (role === "viewer") router.replace("/viewer/posts");
     } catch (err) {
       toast.error(err?.response?.data?.message || "Invalid credentials");
     }

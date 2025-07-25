@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
-import {jwtDecode} from "jwt-decode";
+import { get } from "@/services/api.service";
 
 const AuthContext = createContext(null);
 
@@ -8,23 +8,32 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null); // { id, role }
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
-      if (token) {
-        try {
-          const decoded = jwtDecode(token);
-          setUser({ id: decoded.id, role: decoded.role });
-        } catch (err) {
-          console.error("Token decode error", err);
-          setUser(null);
-        }
+    const checkAuth = async () => {
+      const token =
+        typeof window !== "undefined" && localStorage.getItem("token");
+      if (!token) {
+        setUser(null);
+        return;
       }
-    }
+
+      try {
+        const res = await get("/auth/me");
+        if (res.data.user) setUser(res.data.user);
+        else logout()
+      } catch (err) {
+        logout()
+        console.error("User verification failed", err);
+        setUser(null);
+      }
+    };
+
+    checkAuth();
   }, []);
 
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
+    window.location.reload()
   };
 
   return (
